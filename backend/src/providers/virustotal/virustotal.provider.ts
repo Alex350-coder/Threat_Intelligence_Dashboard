@@ -2,16 +2,8 @@ import type { IocType, ProviderResult } from '@tid/shared';
 import type { ThreatProvider } from '../types.js';
 import { logger } from '../../config/logger.js';
 import { fetchWithTimeout } from '../http.js';
+import { detectIocType, normalizeIoc } from '../../services/detection/ioc-detector.js';
 import { mapVirusTotalResult, unavailableVirusTotalResult, type VirusTotalAnalysisStats } from './virustotal.mapper.js';
-
-const HASH_PATTERN = /^[a-fA-F0-9]{32}$|^[a-fA-F0-9]{40}$|^[a-fA-F0-9]{64}$/;
-const IPV4_PATTERN = /^(\d{1,3}\.){3}\d{1,3}$/;
-const IPV6_PATTERN = /^[0-9a-fA-F:]+$/;
-const DOMAIN_PATTERN = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
-
-function isIp(value: string): boolean {
-  return IPV4_PATTERN.test(value) || (value.includes(':') && IPV6_PATTERN.test(value));
-}
 
 interface VirusTotalResponse {
   data: {
@@ -19,24 +11,6 @@ interface VirusTotalResponse {
       last_analysis_stats: VirusTotalAnalysisStats;
     };
   };
-}
-
-/**
- * `ThreatProvider.lookup` only receives the raw ioc string (no iocType), so VirusTotal
- * detects its own shape here to pick the right v3 endpoint. Checked in specificity order:
- * a hash is unambiguous hex-length, a URL has a scheme, otherwise IP vs domain by pattern.
- */
-export function detectShape(ioc: string): IocType | null {
-  if (HASH_PATTERN.test(ioc)) return 'hash';
-  if (isIp(ioc)) return 'ip';
-  try {
-    new URL(ioc);
-    return 'url';
-  } catch {
-    // not a URL, fall through to domain check
-  }
-  if (DOMAIN_PATTERN.test(ioc)) return 'domain';
-  return null;
 }
 
 function toEndpointPath(shape: IocType, ioc: string): string {
@@ -64,18 +38,19 @@ export class VirusTotalProvider implements ThreatProvider {
   }
 
   async lookup(ioc: string): Promise<ProviderResult> {
-    const shape = detectShape(ioc);
+    const shape = detectIocType(ioc);
     if (!this.apiKey || !shape) {
       return unavailableVirusTotalResult();
     }
+    const normalized = normalizeIoc(ioc, shape);
 
     try {
-      const url = `https://www.virustotal.com/api/v3/${toEndpointPath(shape, ioc)}`;
+      const url = `https://www.virustotal.com/api/v3/${toEndpointPath(shape, normalized)}`;
       const body = (await fetchWithTimeout(url, {
         headers: { 'x-apikey': this.apiKey, Accept: 'application/json' },
       })) as VirusTotalResponse;
       const stats = body.data.attributes.last_analysis_stats;
-      return mapVirusTotalResult(stats, `https://www.virustotal.com/gui/search/${encodeURIComponent(ioc)}`);
+      return mapVirusTotalResult(stats, `https://www.virustotal.com/gui/search/${encodeURIComponent(normalized)}`);
     } catch (error) {
       logger.warn('VirusTotal lookup failed', { error: error instanceof Error ? error.message : String(error) });
       return unavailableVirusTotalResult();
