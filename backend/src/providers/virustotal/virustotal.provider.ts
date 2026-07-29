@@ -1,9 +1,8 @@
 import type { IocType, ProviderResult } from '@tid/shared';
 import type { ThreatProvider } from '../types.js';
 import { logger } from '../../config/logger.js';
+import { fetchWithTimeout } from '../http.js';
 import { mapVirusTotalResult, unavailableVirusTotalResult, type VirusTotalAnalysisStats } from './virustotal.mapper.js';
-
-const VIRUSTOTAL_TIMEOUT_MS = 8000;
 
 const HASH_PATTERN = /^[a-fA-F0-9]{32}$|^[a-fA-F0-9]{40}$|^[a-fA-F0-9]{64}$/;
 const IPV4_PATTERN = /^(\d{1,3}\.){3}\d{1,3}$/;
@@ -70,29 +69,16 @@ export class VirusTotalProvider implements ThreatProvider {
       return unavailableVirusTotalResult();
     }
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), VIRUSTOTAL_TIMEOUT_MS);
-
     try {
       const url = `https://www.virustotal.com/api/v3/${toEndpointPath(shape, ioc)}`;
-      const response = await fetch(url, {
+      const body = (await fetchWithTimeout(url, {
         headers: { 'x-apikey': this.apiKey, Accept: 'application/json' },
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        logger.warn('VirusTotal lookup failed', { status: response.status });
-        return unavailableVirusTotalResult();
-      }
-
-      const body = (await response.json()) as VirusTotalResponse;
+      })) as VirusTotalResponse;
       const stats = body.data.attributes.last_analysis_stats;
       return mapVirusTotalResult(stats, `https://www.virustotal.com/gui/search/${encodeURIComponent(ioc)}`);
     } catch (error) {
-      logger.warn('VirusTotal lookup error', { error: error instanceof Error ? error.message : String(error) });
+      logger.warn('VirusTotal lookup failed', { error: error instanceof Error ? error.message : String(error) });
       return unavailableVirusTotalResult();
-    } finally {
-      clearTimeout(timeout);
     }
   }
 }
