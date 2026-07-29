@@ -21,3 +21,22 @@ export interface ApiErrorResponse {
 }
 
 export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
+
+export type Verdict = 'malicious' | 'suspicious' | 'clean' | 'unknown';
+
+export type ProviderStatus = 'ok' | 'unavailable';
+
+export interface KeyValue {
+  key: string;
+  value: string;
+}
+
+export interface ProviderResult {
+  provider: string;
+  status: ProviderStatus;
+  verdict: Verdict;
+  score?: number;
+  summary: string;
+  details: KeyValue[];
+  link?: string;
+}
