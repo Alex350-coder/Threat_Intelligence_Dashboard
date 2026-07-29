@@ -40,3 +40,13 @@ export interface ProviderResult {
   details: KeyValue[];
   link?: string;
 }
+
+export interface AggregatedIocResult {
+  ioc: string;
+  type: IocType;
+  verdict: Verdict;
+  score: number;
+  providers: ProviderResult[];
+  cached: boolean;
+  fetchedAt: string;
+}

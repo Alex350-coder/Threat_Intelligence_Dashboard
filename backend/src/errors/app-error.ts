@@ -23,6 +23,10 @@ export class AppError extends Error {
     return new AppError('RATE_LIMITED', message, 429);
   }
 
+  static upstreamError(message: string): AppError {
+    return new AppError('UPSTREAM_ERROR', message, 502);
+  }
+
   static internal(message = 'Internal server error'): AppError {
     return new AppError('INTERNAL_ERROR', message, 500);
   }

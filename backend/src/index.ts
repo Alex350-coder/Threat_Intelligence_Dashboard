@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { getHealth } from './controllers/health.controller.js';
+import { createIocController } from './controllers/ioc.controller.js';
 import { logger } from './config/logger.js';
 import { loadConfig } from './config/env.js';
 import { securityHeaders } from './middleware/security-headers.middleware.js';
@@ -9,9 +10,15 @@ import { requestLogger } from './middleware/request-logger.middleware.js';
 import { createRateLimiter } from './middleware/rate-limiter.middleware.js';
 import { notFoundHandler } from './middleware/not-found.middleware.js';
 import { errorHandler } from './middleware/error-handler.middleware.js';
+import { asyncHandler } from './middleware/async-handler.js';
+import { createProviderRegistry } from './providers/index.js';
+import { SearchOrchestratorService } from './services/search/search-orchestrator.service.js';
 
 function bootstrap(): void {
   const config = loadConfig();
+  const registry = createProviderRegistry(config);
+  const orchestrator = new SearchOrchestratorService(registry);
+  const iocController = createIocController(orchestrator);
 
   const app = express();
   app.use(securityHeaders);
@@ -21,6 +28,7 @@ function bootstrap(): void {
   app.use(express.json());
 
   app.get('/health', getHealth);
+  app.post('/api/ioc/search', asyncHandler(iocController.search));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
