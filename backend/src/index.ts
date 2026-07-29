@@ -13,11 +13,16 @@ import { errorHandler } from './middleware/error-handler.middleware.js';
 import { asyncHandler } from './middleware/async-handler.js';
 import { createProviderRegistry } from './providers/index.js';
 import { SearchOrchestratorService } from './services/search/search-orchestrator.service.js';
+import { getDb } from './db/connection.js';
+import { SqliteCacheRepository } from './services/cache/cache.repository.js';
+import { CacheService } from './services/cache/cache.service.js';
 
 function bootstrap(): void {
   const config = loadConfig();
   const registry = createProviderRegistry(config);
-  const orchestrator = new SearchOrchestratorService(registry);
+  const db = getDb(config.dbPath);
+  const cache = new CacheService(new SqliteCacheRepository(db), config.cacheTtlSeconds);
+  const orchestrator = new SearchOrchestratorService(registry, cache);
   const iocController = createIocController(orchestrator);
 
   const app = express();

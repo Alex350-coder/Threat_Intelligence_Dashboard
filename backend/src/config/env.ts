@@ -4,6 +4,7 @@ export interface AppConfig {
   rateLimitWindowMs: number;
   rateLimitMaxRequests: number;
   cacheTtlSeconds: number;
+  dbPath: string;
   virusTotalApiKey: string;
   abuseIpDbApiKey: string;
   ipInfoToken: string;
@@ -46,6 +47,7 @@ export function loadConfig(): AppConfig {
     rateLimitWindowMs: requirePositiveNumberEnv('RATE_LIMIT_WINDOW_MS'),
     rateLimitMaxRequests: requirePositiveNumberEnv('RATE_LIMIT_MAX_REQUESTS'),
     cacheTtlSeconds: requirePositiveNumberEnv('CACHE_TTL'),
+    dbPath: process.env.DB_PATH?.trim() || './data/threat-intel.db',
     virusTotalApiKey: process.env.VIRUSTOTAL_API_KEY ?? '',
     abuseIpDbApiKey: process.env.ABUSEIPDB_API_KEY ?? '',
     ipInfoToken: process.env.IPINFO_TOKEN ?? '',

@@ -6,3 +6,8 @@ build/
 coverage/
 .DS_Store
 *.log
+/backend/data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
