@@ -1,0 +1,74 @@
+/**
+ * Design tokens for the Threat Intelligence Dashboard.
+ * Single source of truth for color, typography, and radius (see .claude/DesignSystem.md).
+ * Dark mode is the default palette; [data-theme="light"] overrides it.
+ * Spacing uses Tailwind's default 4px-based scale (already matches DesignSystem.md §4).
+ */
+
+:root {
+  --color-bg: #0b0f14;
+  --color-bg-elevated: #121821;
+  --color-border: #232b36;
+  --color-text: #e6edf3;
+  --color-text-muted: #8b96a5;
+  --color-accent: #38bdf8;
+  --color-accent-foreground: #04121a;
+
+  --color-verdict-malicious: #f5636e;
+  --color-verdict-malicious-bg: #3a1418;
+  --color-verdict-suspicious: #f5b942;
+  --color-verdict-suspicious-bg: #3a2c10;
+  --color-verdict-clean: #4ade80;
+  --color-verdict-clean-bg: #123a20;
+  --color-verdict-unknown: #9aa5b1;
+  --color-verdict-unknown-bg: #232b36;
+
+  --shadow-color: 220 40% 2%;
+}
+
+[data-theme='light'] {
+  --color-bg: #f7f9fb;
+  --color-bg-elevated: #ffffff;
+  --color-border: #dde3ea;
+  --color-text: #10151c;
+  --color-text-muted: #57626f;
+  --color-accent: #0284c7;
+  --color-accent-foreground: #f7fbff;
+
+  --color-verdict-malicious: #c8232f;
+  --color-verdict-malicious-bg: #fbe4e5;
+  --color-verdict-suspicious: #966008;
+  --color-verdict-suspicious-bg: #faf0d6;
+  --color-verdict-clean: #157a44;
+  --color-verdict-clean-bg: #e1f5e9;
+  --color-verdict-unknown: #576270;
+  --color-verdict-unknown-bg: #e7eaee;
+
+  --shadow-color: 220 20% 80%;
+}
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-bg-elevated: var(--color-bg-elevated);
+  --color-border: var(--color-border);
+  --color-text: var(--color-text);
+  --color-text-muted: var(--color-text-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-foreground: var(--color-accent-foreground);
+
+  --color-verdict-malicious: var(--color-verdict-malicious);
+  --color-verdict-malicious-bg: var(--color-verdict-malicious-bg);
+  --color-verdict-suspicious: var(--color-verdict-suspicious);
+  --color-verdict-suspicious-bg: var(--color-verdict-suspicious-bg);
+  --color-verdict-clean: var(--color-verdict-clean);
+  --color-verdict-clean-bg: var(--color-verdict-clean-bg);
+  --color-verdict-unknown: var(--color-verdict-unknown);
+  --color-verdict-unknown-bg: var(--color-verdict-unknown-bg);
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.875rem;
+}
