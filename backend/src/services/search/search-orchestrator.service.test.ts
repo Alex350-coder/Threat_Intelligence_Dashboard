@@ -5,6 +5,7 @@ import type { ThreatProvider } from '../../providers/types.js';
 import { ProviderRegistry } from '../../providers/registry.js';
 import { AppError } from '../../errors/app-error.js';
 import type { CacheService } from '../cache/cache.service.js';
+import type { HistoryService } from '../history/history.service.js';
 import { SearchOrchestratorService } from './search-orchestrator.service.js';
 
 function fakeCache(seed?: AggregatedIocResult): CacheService {
@@ -18,6 +19,16 @@ function fakeCache(seed?: AggregatedIocResult): CacheService {
       store.set(`${iocType}:${ioc}`, value);
     },
   } as unknown as CacheService;
+}
+
+function fakeHistory(): HistoryService & { records: AggregatedIocResult[] } {
+  const records: AggregatedIocResult[] = [];
+  return {
+    records,
+    record: (result: AggregatedIocResult) => {
+      records.push(result);
+    },
+  } as unknown as HistoryService & { records: AggregatedIocResult[] };
 }
 
 function fakeProvider(name: string, result: ProviderResult, supported: IocType[] = ['ip', 'domain', 'url', 'hash']): ThreatProvider {
@@ -127,5 +138,49 @@ describe('SearchOrchestratorService', () => {
 
     assert.equal(first.cached, false);
     assert.equal(second.cached, true);
+  });
+
+  it('records a history entry for a fresh search', async () => {
+    const provider = fakeProvider('VirusTotal', {
+      provider: 'VirusTotal',
+      status: 'ok',
+      verdict: 'clean',
+      score: 5,
+      summary: '',
+      details: [],
+    });
+    const history = fakeHistory();
+    const orchestrator = new SearchOrchestratorService(new ProviderRegistry([provider]), undefined, history);
+
+    await orchestrator.search('8.8.8.8');
+
+    assert.equal(history.records.length, 1);
+    assert.equal(history.records[0]?.ioc, '8.8.8.8');
+  });
+
+  it('records a history entry on a cache hit', async () => {
+    const provider = fakeProvider('VirusTotal', {
+      provider: 'VirusTotal',
+      status: 'ok',
+      verdict: 'clean',
+      score: 5,
+      summary: '',
+      details: [],
+    });
+    const cache = fakeCache({
+      ioc: '8.8.8.8',
+      type: 'ip',
+      verdict: 'malicious',
+      score: 90,
+      providers: [],
+      cached: false,
+      fetchedAt: new Date().toISOString(),
+    });
+    const history = fakeHistory();
+    const orchestrator = new SearchOrchestratorService(new ProviderRegistry([provider]), cache, history);
+
+    await orchestrator.search('8.8.8.8');
+
+    assert.equal(history.records.length, 1);
   });
 });

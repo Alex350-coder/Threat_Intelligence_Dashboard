@@ -11,6 +11,17 @@ const SCHEMA = `
     fetchedAt TEXT NOT NULL,
     expiresAt TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS searches (
+    id TEXT PRIMARY KEY,
+    iocValue TEXT NOT NULL,
+    iocType TEXT NOT NULL,
+    verdict TEXT NOT NULL,
+    score REAL NOT NULL,
+    createdAt TEXT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_searches_createdAt ON searches (createdAt);
 `;
 
 export function getDb(dbPath: string): DatabaseSync {

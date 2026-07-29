@@ -50,3 +50,12 @@ export interface AggregatedIocResult {
   cached: boolean;
   fetchedAt: string;
 }
+
+export interface HistoryEntry {
+  id: string;
+  iocValue: string;
+  iocType: IocType;
+  verdict: Verdict;
+  score: number;
+  createdAt: string;
+}

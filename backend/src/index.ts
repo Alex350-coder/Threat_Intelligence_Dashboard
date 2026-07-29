@@ -16,13 +16,16 @@ import { SearchOrchestratorService } from './services/search/search-orchestrator
 import { getDb } from './db/connection.js';
 import { SqliteCacheRepository } from './services/cache/cache.repository.js';
 import { CacheService } from './services/cache/cache.service.js';
+import { SqliteHistoryRepository } from './services/history/history.repository.js';
+import { HistoryService } from './services/history/history.service.js';
 
 function bootstrap(): void {
   const config = loadConfig();
   const registry = createProviderRegistry(config);
   const db = getDb(config.dbPath);
   const cache = new CacheService(new SqliteCacheRepository(db), config.cacheTtlSeconds);
-  const orchestrator = new SearchOrchestratorService(registry, cache);
+  const history = new HistoryService(new SqliteHistoryRepository(db, config.historyLimit));
+  const orchestrator = new SearchOrchestratorService(registry, cache, history);
   const iocController = createIocController(orchestrator);
 
   const app = express();

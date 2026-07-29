@@ -2,6 +2,7 @@ import type { AggregatedIocResult } from '@tid/shared';
 import { AppError } from '../../errors/app-error.js';
 import type { ProviderRegistry } from '../../providers/registry.js';
 import type { CacheService } from '../cache/cache.service.js';
+import type { HistoryService } from '../history/history.service.js';
 import { detectIocType, normalizeIoc } from '../detection/ioc-detector.js';
 import { aggregateVerdict, aggregateScore, allProvidersUnavailable } from './aggregate.js';
 
@@ -9,6 +10,7 @@ export class SearchOrchestratorService {
   constructor(
     private readonly registry: ProviderRegistry,
     private readonly cache?: CacheService,
+    private readonly history?: HistoryService,
   ) {}
 
   async search(rawIoc: string): Promise<AggregatedIocResult> {
@@ -20,7 +22,9 @@ export class SearchOrchestratorService {
 
     const cached = this.cache?.get(type, ioc);
     if (cached) {
-      return { ...cached, cached: true };
+      const result = { ...cached, cached: true };
+      this.history?.record(result);
+      return result;
     }
 
     const providers = this.registry.getProvidersFor(type);
@@ -45,6 +49,7 @@ export class SearchOrchestratorService {
     };
 
     this.cache?.set(type, ioc, result);
+    this.history?.record(result);
 
     return result;
   }
