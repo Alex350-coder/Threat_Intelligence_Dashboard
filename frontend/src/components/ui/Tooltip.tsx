@@ -14,6 +14,9 @@ export function Tooltip({ label, children, side = 'top', className }: TooltipPro
   const id = useId();
 
   return (
+    // This wrapper doesn't have its own interactive semantics (no tabIndex/role) — it only
+    // reacts to hover/focus events bubbling up from the interactive `children` it wraps.
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <span
       className={cn('relative inline-flex', className)}
       onMouseEnter={() => setOpen(true)}
