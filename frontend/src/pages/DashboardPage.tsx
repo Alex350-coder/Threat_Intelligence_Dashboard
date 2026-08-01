@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { SearchBar } from '../components/search/SearchBar.js';
 import { ProviderPanel } from '../components/dashboard/ProviderPanel.js';
 import { ResultsSkeleton } from '../components/dashboard/ResultsSkeleton.js';
@@ -8,6 +10,14 @@ import { useIocSearch } from '../hooks/useIocSearch.js';
 
 export function DashboardPage(): JSX.Element {
   const { status, data, error, search } = useIocSearch();
+  const [searchParams] = useSearchParams();
+  const queryIoc = searchParams.get('q') ?? undefined;
+
+  // Reopening a history/favorite entry navigates here with ?q=<ioc> —
+  // run that search automatically instead of leaving the dashboard idle.
+  useEffect(() => {
+    if (queryIoc) void search(queryIoc);
+  }, [queryIoc, search]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -17,7 +27,7 @@ export function DashboardPage(): JSX.Element {
           Paste an IP address, domain, URL, or file hash to aggregate results across threat-intel providers.
         </p>
       </div>
-      <SearchBar onSubmit={search} loading={status === 'loading'} />
+      <SearchBar onSubmit={search} loading={status === 'loading'} initialValue={queryIoc} />
       <div aria-live="polite" aria-atomic="true">
         {status === 'idle' ? (
           <EmptyState

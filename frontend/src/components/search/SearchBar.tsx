@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Button } from '../ui/Button.js';
 import { Input } from '../ui/Input.js';
@@ -8,10 +8,19 @@ import { IocTypeBadge } from './IocTypeBadge.js';
 type SearchBarProps = {
   onSubmit: (value: string) => void;
   loading?: boolean;
+  /** Prefills the input, e.g. when reopening a history/favorite entry. */
+  initialValue?: string;
 };
 
-export function SearchBar({ onSubmit, loading = false }: SearchBarProps): JSX.Element {
-  const [value, setValue] = useState('');
+export function SearchBar({ onSubmit, loading = false, initialValue }: SearchBarProps): JSX.Element {
+  const [value, setValue] = useState(initialValue ?? '');
+
+  // Reopening a different history/favorite entry while already on the dashboard
+  // doesn't remount this component — sync the field when the prefill changes.
+  useEffect(() => {
+    if (initialValue !== undefined) setValue(initialValue);
+  }, [initialValue]);
+
   const trimmed = value.trim();
   const detectedType = useMemo(() => detectIocType(trimmed), [trimmed]);
 
