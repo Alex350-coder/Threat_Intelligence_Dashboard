@@ -1,4 +1,6 @@
 import { SearchBar } from '../components/search/SearchBar.js';
+import { ProviderPanel } from '../components/dashboard/ProviderPanel.js';
+import { ScoreSummary } from '../components/dashboard/ScoreSummary.js';
 import { useIocSearch } from '../hooks/useIocSearch.js';
 
 export function DashboardPage(): JSX.Element {
@@ -13,8 +15,17 @@ export function DashboardPage(): JSX.Element {
         </p>
       </div>
       <SearchBar onSubmit={search} loading={status === 'loading'} />
-      {/* Results, loading, empty, and error rendering land in later Phase 7 tasks. */}
-      {status === 'success' && data ? <p className="text-text-muted">{data.ioc}</p> : null}
+      {/* Loading/empty/error rendering lands in the next Phase 7 task. */}
+      {status === 'success' && data ? (
+        <div className="flex flex-col gap-4">
+          <ScoreSummary result={data} />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {data.providers.map((provider) => (
+              <ProviderPanel key={provider.provider} result={provider} />
+            ))}
+          </div>
+        </div>
+      ) : null}
       {status === 'error' && error ? <p className="text-verdict-malicious">{error}</p> : null}
     </div>
   );
