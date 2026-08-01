@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { getHealth } from './controllers/health.controller.js';
 import { createIocController } from './controllers/ioc.controller.js';
+import { createHistoryController } from './controllers/history.controller.js';
 import { logger } from './config/logger.js';
 import { loadConfig } from './config/env.js';
 import { securityHeaders } from './middleware/security-headers.middleware.js';
@@ -27,6 +28,7 @@ function bootstrap(): void {
   const history = new HistoryService(new SqliteHistoryRepository(db, config.historyLimit));
   const orchestrator = new SearchOrchestratorService(registry, cache, history);
   const iocController = createIocController(orchestrator);
+  const historyController = createHistoryController(history);
 
   const app = express();
   app.use(securityHeaders);
@@ -37,6 +39,9 @@ function bootstrap(): void {
 
   app.get('/health', getHealth);
   app.post('/api/ioc/search', asyncHandler(iocController.search));
+  app.get('/api/history', asyncHandler(async (req, res) => historyController.list(req, res)));
+  app.delete('/api/history/:id', asyncHandler(async (req, res) => historyController.remove(req, res)));
+  app.delete('/api/history', asyncHandler(async (req, res) => historyController.clear(req, res)));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
