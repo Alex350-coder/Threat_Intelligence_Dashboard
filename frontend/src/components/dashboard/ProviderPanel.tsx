@@ -8,8 +8,18 @@ type ProviderPanelProps = {
   result: ProviderResult;
 };
 
+function isSafeHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 export function ProviderPanel({ result }: ProviderPanelProps): JSX.Element {
   const isUnavailable = result.status === 'unavailable';
+  const hasSafeLink = result.link !== undefined && isSafeHttpUrl(result.link);
 
   return (
     <Card>
@@ -29,7 +39,7 @@ export function ProviderPanel({ result }: ProviderPanelProps): JSX.Element {
             ) : null}
             {result.summary ? <p className="text-sm text-text">{result.summary}</p> : null}
             <DetailTable details={result.details} />
-            {result.link ? (
+            {hasSafeLink ? (
               <a
                 href={result.link}
                 target="_blank"

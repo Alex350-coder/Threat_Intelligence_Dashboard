@@ -18,24 +18,27 @@ export function DashboardPage(): JSX.Element {
         </p>
       </div>
       <SearchBar onSubmit={search} loading={status === 'loading'} />
-      {status === 'idle' ? (
-        <EmptyState
-          title="No search yet"
-          description="Paste an IOC above to aggregate results across threat-intel providers."
-        />
-      ) : null}
-      {status === 'loading' ? <ResultsSkeleton /> : null}
-      {status === 'success' && data ? (
-        <div className="flex flex-col gap-4">
-          <ScoreSummary result={data} />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {data.providers.map((provider) => (
-              <ProviderPanel key={provider.provider} result={provider} />
-            ))}
+      <div aria-live="polite" aria-atomic="true">
+        {status === 'idle' ? (
+          <EmptyState
+            title="No search yet"
+            description="Paste an IOC above to aggregate results across threat-intel providers."
+          />
+        ) : null}
+        {status === 'loading' ? <ResultsSkeleton /> : null}
+        {status === 'success' && data ? (
+          <div className="flex flex-col gap-4">
+            <h2 className="sr-only">Search results</h2>
+            <ScoreSummary result={data} />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {data.providers.map((provider) => (
+                <ProviderPanel key={provider.provider} result={provider} />
+              ))}
+            </div>
           </div>
-        </div>
-      ) : null}
-      {status === 'error' ? <ErrorState title="Search failed" description={error} /> : null}
+        ) : null}
+        {status === 'error' ? <ErrorState title="Search failed" description={error} /> : null}
+      </div>
     </div>
   );
 }

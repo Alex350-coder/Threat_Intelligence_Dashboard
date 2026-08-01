@@ -11,8 +11,8 @@ export function DetailTable({ details }: DetailTableProps): JSX.Element | null {
   return (
     <Table aria-label="Provider details">
       <TableBody>
-        {details.map((item) => (
-          <TableRow key={item.key}>
+        {details.map((item, index) => (
+          <TableRow key={`${item.key}-${index}`}>
             <TableCell className="text-text-muted">{item.key}</TableCell>
             <TableCell mono align="right">
               {item.value}
