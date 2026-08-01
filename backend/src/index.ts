@@ -4,6 +4,7 @@ import cors from 'cors';
 import { getHealth } from './controllers/health.controller.js';
 import { createIocController } from './controllers/ioc.controller.js';
 import { createHistoryController } from './controllers/history.controller.js';
+import { createFavoritesController } from './controllers/favorites.controller.js';
 import { logger } from './config/logger.js';
 import { loadConfig } from './config/env.js';
 import { securityHeaders } from './middleware/security-headers.middleware.js';
@@ -19,6 +20,8 @@ import { SqliteCacheRepository } from './services/cache/cache.repository.js';
 import { CacheService } from './services/cache/cache.service.js';
 import { SqliteHistoryRepository } from './services/history/history.repository.js';
 import { HistoryService } from './services/history/history.service.js';
+import { SqliteFavoritesRepository } from './services/favorites/favorites.repository.js';
+import { FavoritesService } from './services/favorites/favorites.service.js';
 
 function bootstrap(): void {
   const config = loadConfig();
@@ -29,6 +32,8 @@ function bootstrap(): void {
   const orchestrator = new SearchOrchestratorService(registry, cache, history);
   const iocController = createIocController(orchestrator);
   const historyController = createHistoryController(history);
+  const favorites = new FavoritesService(new SqliteFavoritesRepository(db));
+  const favoritesController = createFavoritesController(favorites);
 
   const app = express();
   app.use(securityHeaders);
@@ -42,6 +47,8 @@ function bootstrap(): void {
   app.get('/api/history', asyncHandler(async (req, res) => historyController.list(req, res)));
   app.delete('/api/history/:id', asyncHandler(async (req, res) => historyController.remove(req, res)));
   app.delete('/api/history', asyncHandler(async (req, res) => historyController.clear(req, res)));
+  app.get('/api/favorites', asyncHandler(async (req, res) => favoritesController.list(req, res)));
+  app.post('/api/favorites/toggle', asyncHandler(async (req, res) => favoritesController.toggle(req, res)));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

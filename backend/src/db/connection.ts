@@ -22,6 +22,17 @@ const SCHEMA = `
   );
 
   CREATE INDEX IF NOT EXISTS idx_searches_createdAt ON searches (createdAt);
+
+  CREATE TABLE IF NOT EXISTS favorites (
+    id TEXT PRIMARY KEY,
+    iocValue TEXT NOT NULL UNIQUE,
+    iocType TEXT NOT NULL,
+    verdict TEXT NOT NULL,
+    score REAL NOT NULL,
+    createdAt TEXT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_favorites_createdAt ON favorites (createdAt);
 `;
 
 export function getDb(dbPath: string): DatabaseSync {

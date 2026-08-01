@@ -1,4 +1,12 @@
-import type { AggregatedIocResult, ApiErrorCode, ApiResponse, HistoryEntry } from '@tid/shared';
+import type {
+  AggregatedIocResult,
+  ApiErrorCode,
+  ApiResponse,
+  FavoriteEntry,
+  FavoriteToggleRequest,
+  FavoriteToggleResult,
+  HistoryEntry,
+} from '@tid/shared';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000';
 
@@ -67,4 +75,15 @@ export function deleteHistoryEntry(id: string, signal?: AbortSignal): Promise<vo
 
 export function clearHistory(signal?: AbortSignal): Promise<void> {
   return request<void>('/api/history', { method: 'DELETE', signal });
+}
+
+export function fetchFavorites(signal?: AbortSignal): Promise<FavoriteEntry[]> {
+  return request<FavoriteEntry[]>('/api/favorites', { method: 'GET', signal });
+}
+
+export function toggleFavorite(
+  input: FavoriteToggleRequest,
+  signal?: AbortSignal,
+): Promise<FavoriteToggleResult> {
+  return request<FavoriteToggleResult>('/api/favorites/toggle', { method: 'POST', body: input, signal });
 }

@@ -59,3 +59,23 @@ export interface HistoryEntry {
   score: number;
   createdAt: string;
 }
+
+export interface FavoriteEntry {
+  id: string;
+  iocValue: string;
+  iocType: IocType;
+  verdict: Verdict;
+  score: number;
+  createdAt: string;
+}
+
+export interface FavoriteToggleRequest {
+  ioc: string;
+  type: IocType;
+  verdict: Verdict;
+  score: number;
+}
+
+export interface FavoriteToggleResult {
+  favorited: boolean;
+}
