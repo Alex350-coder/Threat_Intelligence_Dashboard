@@ -39,10 +39,18 @@ export function DashboardPage(): JSX.Element {
         {status === 'success' && data ? (
           <div className="flex flex-col gap-4">
             <h2 className="sr-only">Search results</h2>
-            <ScoreSummary result={data} />
+            <div className="animate-fade-in-up">
+              <ScoreSummary result={data} />
+            </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {data.providers.map((provider) => (
-                <ProviderPanel key={provider.provider} result={provider} />
+              {data.providers.map((provider, index) => (
+                <div
+                  key={provider.provider}
+                  className="animate-fade-in-up"
+                  style={{ animationDelay: `${Math.min(index, 6) * 60}ms` }}
+                >
+                  <ProviderPanel result={provider} />
+                </div>
               ))}
             </div>
           </div>

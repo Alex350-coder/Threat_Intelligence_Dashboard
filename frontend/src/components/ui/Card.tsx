@@ -8,6 +8,8 @@ export function Card({ className, ...props }: CardProps): JSX.Element {
     <div
       className={cn(
         'rounded-lg border border-border bg-bg-elevated shadow-sm shadow-black/20',
+        'transition-[transform,box-shadow] duration-200 ease-out',
+        'hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/30',
         className,
       )}
       {...props}
