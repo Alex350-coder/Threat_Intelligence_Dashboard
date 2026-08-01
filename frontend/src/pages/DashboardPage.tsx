@@ -1,6 +1,9 @@
 import { SearchBar } from '../components/search/SearchBar.js';
 import { ProviderPanel } from '../components/dashboard/ProviderPanel.js';
+import { ResultsSkeleton } from '../components/dashboard/ResultsSkeleton.js';
 import { ScoreSummary } from '../components/dashboard/ScoreSummary.js';
+import { EmptyState } from '../components/ui/EmptyState.js';
+import { ErrorState } from '../components/ui/ErrorState.js';
 import { useIocSearch } from '../hooks/useIocSearch.js';
 
 export function DashboardPage(): JSX.Element {
@@ -15,7 +18,13 @@ export function DashboardPage(): JSX.Element {
         </p>
       </div>
       <SearchBar onSubmit={search} loading={status === 'loading'} />
-      {/* Loading/empty/error rendering lands in the next Phase 7 task. */}
+      {status === 'idle' ? (
+        <EmptyState
+          title="No search yet"
+          description="Paste an IOC above to aggregate results across threat-intel providers."
+        />
+      ) : null}
+      {status === 'loading' ? <ResultsSkeleton /> : null}
       {status === 'success' && data ? (
         <div className="flex flex-col gap-4">
           <ScoreSummary result={data} />
@@ -26,7 +35,7 @@ export function DashboardPage(): JSX.Element {
           </div>
         </div>
       ) : null}
-      {status === 'error' && error ? <p className="text-verdict-malicious">{error}</p> : null}
+      {status === 'error' ? <ErrorState title="Search failed" description={error} /> : null}
     </div>
   );
 }
