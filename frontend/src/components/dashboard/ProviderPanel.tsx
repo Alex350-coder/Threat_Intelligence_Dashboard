@@ -25,7 +25,11 @@ export function ProviderPanel({ result }: ProviderPanelProps): JSX.Element {
     <Card>
       <CardHeader>
         <h3 className="text-sm font-semibold text-text">{result.provider}</h3>
-        {isUnavailable ? <Badge tone="neutral">Unavailable</Badge> : <VerdictBadge verdict={result.verdict} />}
+        {isUnavailable ? (
+          <Badge tone="neutral">Unavailable</Badge>
+        ) : (
+          <VerdictBadge verdict={result.verdict} showTooltip />
+        )}
       </CardHeader>
       <CardBody className="flex flex-col gap-3">
         {isUnavailable ? (

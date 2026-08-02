@@ -1,6 +1,7 @@
 import type { AggregatedIocResult } from '@tid/shared';
 import { Badge } from '../ui/Badge.js';
 import { Card, CardBody } from '../ui/Card.js';
+import { Tooltip } from '../ui/Tooltip.js';
 import { FavoriteButton } from './FavoriteButton.js';
 import { VerdictBadge } from './VerdictBadge.js';
 
@@ -30,10 +31,15 @@ export function ScoreSummary({ result }: ScoreSummaryProps): JSX.Element {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <VerdictBadge verdict={result.verdict} />
-          <p className="text-sm tabular-nums text-text-muted">
-            Aggregate score: <span className="font-medium text-text">{result.score}</span>/100
-          </p>
+          <VerdictBadge verdict={result.verdict} showTooltip />
+          <Tooltip label="Averaged across every provider that returned a score for this indicator. Higher means riskier.">
+            {/* Focusable so keyboard users can trigger the tooltip the same way mouse
+                users do on hover, same rationale as Badge's tabIndex in VerdictBadge. */}
+            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+            <span tabIndex={0} className="rounded-sm text-sm tabular-nums text-text-muted">
+              Aggregate score: <span className="font-medium text-text">{result.score}</span>/100
+            </span>
+          </Tooltip>
         </div>
       </CardBody>
     </Card>

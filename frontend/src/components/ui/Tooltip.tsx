@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { cloneElement, isValidElement, useId, useState } from 'react';
 import type { ReactNode } from 'react';
 import { cn } from '../../lib/cn.js';
 
@@ -13,6 +13,13 @@ export function Tooltip({ label, children, side = 'top', className }: TooltipPro
   const [open, setOpen] = useState(false);
   const id = useId();
 
+  // aria-describedby must live on the element assistive tech actually focuses
+  // (the trigger itself), not on a wrapping span — otherwise screen readers
+  // never announce the tooltip text on keyboard focus.
+  const trigger = isValidElement<{ 'aria-describedby'?: string }>(children)
+    ? cloneElement(children, { 'aria-describedby': open ? id : undefined })
+    : children;
+
   return (
     // This wrapper doesn't have its own interactive semantics (no tabIndex/role) — it only
     // reacts to hover/focus events bubbling up from the interactive `children` it wraps.
@@ -25,7 +32,7 @@ export function Tooltip({ label, children, side = 'top', className }: TooltipPro
       onBlur={() => setOpen(false)}
       onKeyDown={(event) => event.key === 'Escape' && setOpen(false)}
     >
-      <span aria-describedby={open ? id : undefined}>{children}</span>
+      {trigger}
       <span
         role="tooltip"
         id={id}

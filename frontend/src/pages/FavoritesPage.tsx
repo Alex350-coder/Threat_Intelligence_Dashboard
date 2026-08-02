@@ -3,9 +3,11 @@ import { EmptyState } from '../components/ui/EmptyState.js';
 import { ErrorState } from '../components/ui/ErrorState.js';
 import { Skeleton } from '../components/ui/Skeleton.js';
 import { IocRecordTable } from '../components/history/IocRecordTable.js';
+import { useDocumentTitle } from '../hooks/useDocumentTitle.js';
 import { useFavorites } from '../hooks/useFavorites.js';
 
 export function FavoritesPage(): JSX.Element {
+  useDocumentTitle('Favorites');
   const { status, favorites, error, toggleError, isPending, toggle } = useFavorites();
 
   return (

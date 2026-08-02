@@ -1,23 +1,37 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { SearchBar } from '../components/search/SearchBar.js';
 import { ProviderPanel } from '../components/dashboard/ProviderPanel.js';
 import { ResultsSkeleton } from '../components/dashboard/ResultsSkeleton.js';
 import { ScoreSummary } from '../components/dashboard/ScoreSummary.js';
+import { Button } from '../components/ui/Button.js';
 import { EmptyState } from '../components/ui/EmptyState.js';
 import { ErrorState } from '../components/ui/ErrorState.js';
+import { useDocumentTitle } from '../hooks/useDocumentTitle.js';
 import { useIocSearch } from '../hooks/useIocSearch.js';
 
 export function DashboardPage(): JSX.Element {
+  useDocumentTitle('Dashboard');
   const { status, data, error, search } = useIocSearch();
   const [searchParams] = useSearchParams();
   const queryIoc = searchParams.get('q') ?? undefined;
+  // Tracks the last submitted query so the error state's "Try again" button
+  // can re-run it without the user having to retype it.
+  const lastQueryRef = useRef<string>();
+
+  const runSearch = useCallback(
+    (value: string) => {
+      lastQueryRef.current = value;
+      void search(value);
+    },
+    [search],
+  );
 
   // Reopening a history/favorite entry navigates here with ?q=<ioc> —
   // run that search automatically instead of leaving the dashboard idle.
   useEffect(() => {
-    if (queryIoc) void search(queryIoc);
-  }, [queryIoc, search]);
+    if (queryIoc) runSearch(queryIoc);
+  }, [queryIoc, runSearch]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -27,7 +41,7 @@ export function DashboardPage(): JSX.Element {
           Paste an IP address, domain, URL, or file hash to aggregate results across threat-intel providers.
         </p>
       </div>
-      <SearchBar onSubmit={search} loading={status === 'loading'} initialValue={queryIoc} />
+      <SearchBar onSubmit={runSearch} loading={status === 'loading'} initialValue={queryIoc} />
       <div aria-live="polite" aria-atomic="true">
         {status === 'idle' ? (
           <EmptyState
@@ -55,7 +69,19 @@ export function DashboardPage(): JSX.Element {
             </div>
           </div>
         ) : null}
-        {status === 'error' ? <ErrorState title="Search failed" description={error} /> : null}
+        {status === 'error' ? (
+          <ErrorState
+            title="Search failed"
+            description={error}
+            action={
+              lastQueryRef.current ? (
+                <Button type="button" variant="secondary" size="sm" onClick={() => runSearch(lastQueryRef.current!)}>
+                  Try again
+                </Button>
+              ) : undefined
+            }
+          />
+        ) : null}
       </div>
     </div>
   );
