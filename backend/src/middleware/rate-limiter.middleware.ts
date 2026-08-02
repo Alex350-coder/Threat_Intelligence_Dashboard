@@ -2,7 +2,9 @@ import rateLimit from 'express-rate-limit';
 import type { AppConfig } from '../config/env.js';
 import type { ApiErrorResponse } from '@tid/shared';
 
-export function createRateLimiter(config: AppConfig): ReturnType<typeof rateLimit> {
+export function createRateLimiter(
+  config: Pick<AppConfig, 'rateLimitWindowMs' | 'rateLimitMaxRequests'>,
+): ReturnType<typeof rateLimit> {
   return rateLimit({
     windowMs: config.rateLimitWindowMs,
     max: config.rateLimitMaxRequests,
