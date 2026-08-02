@@ -17,7 +17,14 @@ export function Hero(): JSX.Element {
           <div className="relative z-10">
             <NavBar variant="transparent" />
           </div>
-          <div className="relative z-10 flex flex-1 flex-col justify-center px-6 sm:px-12 lg:px-20">
+          <div
+            id="hero-content"
+            tabIndex={-1}
+            // Default focus-visible outline is drawn on top of an arbitrary photo
+            // frame here — layer a solid dark ring first so the accent ring always
+            // has guaranteed contrast, regardless of what's behind it (see Cta.tsx).
+            className="relative z-10 flex flex-1 flex-col justify-center px-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:px-12 lg:px-20"
+          >
             {/* Solid backdrop independent of the underlying frame's brightness —
                 the canvas content is arbitrary photo/video stills, so the
                 directional scrim alone can't guarantee text contrast here. */}

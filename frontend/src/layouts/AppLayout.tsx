@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { NavBar } from '../components/layout/NavBar.js';
+import { SkipLink } from '../components/SkipLink.js';
 
 export function AppLayout(): JSX.Element {
   const location = useLocation();
@@ -15,8 +16,9 @@ export function AppLayout(): JSX.Element {
 
   return (
     <div className="min-h-screen bg-bg text-text">
+      <SkipLink targetId="main-content" />
       <NavBar variant="solid" />
-      <main ref={mainRef} tabIndex={-1} className="mx-auto max-w-6xl px-4 py-8 outline-none sm:px-6">
+      <main id="main-content" ref={mainRef} tabIndex={-1} className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <Outlet />
       </main>
     </div>

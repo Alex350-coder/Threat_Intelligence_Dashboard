@@ -3,9 +3,11 @@ import { EmptyState } from '../components/ui/EmptyState.js';
 import { ErrorState } from '../components/ui/ErrorState.js';
 import { Skeleton } from '../components/ui/Skeleton.js';
 import { IocRecordTable } from '../components/history/IocRecordTable.js';
+import { useDocumentTitle } from '../hooks/useDocumentTitle.js';
 import { useHistory } from '../hooks/useHistory.js';
 
 export function HistoryPage(): JSX.Element {
+  useDocumentTitle('History');
   const { status, entries, error, remove, clear } = useHistory();
 
   return (
@@ -41,7 +43,12 @@ export function HistoryPage(): JSX.Element {
             caption="Recent searches"
             records={entries}
             renderActions={(record) => (
-              <Button variant="ghost" size="sm" onClick={() => void remove(record.id)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label={`Delete ${record.iocValue} from history`}
+                onClick={() => void remove(record.id)}
+              >
                 Delete
               </Button>
             )}
