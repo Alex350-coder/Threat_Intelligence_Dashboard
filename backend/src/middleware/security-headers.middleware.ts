@@ -8,8 +8,10 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   // This is a JSON-only API — it never renders HTML, so no source category needs to be allowed.
   res.setHeader('Content-Security-Policy', "default-src 'none'");
 
-  const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
-  if (isHttps) {
+  // req.secure already resolves X-Forwarded-Proto correctly once Express's `trust proxy` hop
+  // count is configured (see app.ts) — reading the header directly here would trust it even
+  // when no proxy hop is configured to guarantee it's genuine.
+  if (req.secure) {
     res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
   }
 
