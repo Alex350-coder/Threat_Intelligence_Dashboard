@@ -36,6 +36,18 @@ function requirePositiveNumberEnv(name: string): number {
   return parsed;
 }
 
+function optionalPositiveIntegerEnv(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === '') {
+    return fallback;
+  }
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`Environment variable ${name} must be a positive integer, got: ${raw}`);
+  }
+  return parsed;
+}
+
 export function loadConfig(): AppConfig {
   const missing = REQUIRED_VARS.filter((name) => !process.env[name]?.trim());
   if (missing.length > 0) {
@@ -43,7 +55,7 @@ export function loadConfig(): AppConfig {
   }
 
   return {
-    port: Number(process.env.PORT ?? 4000),
+    port: optionalPositiveIntegerEnv('PORT', 4000),
     corsOrigin: requireEnv('CORS_ORIGIN'),
     rateLimitWindowMs: requirePositiveNumberEnv('RATE_LIMIT_WINDOW_MS'),
     rateLimitMaxRequests: requirePositiveNumberEnv('RATE_LIMIT_MAX_REQUESTS'),
