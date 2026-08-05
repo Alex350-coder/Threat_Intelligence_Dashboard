@@ -109,20 +109,6 @@ Since this is a portfolio project, not a commercial product, several things are 
 
 ## Status
 
-**Phases 1–10 (MVP):** Complete. All core features shipped:
-- IOC detection and multi-provider aggregation (AbuseIPDB, VirusTotal)
-- Dark-mode-first dashboard with responsive design
-- Scroll-scrubbed canvas hero background (210-frame JPEG sequence)
-- History and favorites tracking (local SQLite)
-- Response caching and rate limiting
-- Comprehensive test coverage (backend 98%+ lines, frontend 71%+ lines)
-- Production build optimization (code splitting, lazy routes, Lighthouse 97 Performance / 100 Accessibility)
-
-**Phase 11 (Deployment):** Not started. This phase requires:
-- A hosting account (AWS, Vercel, Fly.io, etc.) — not included in this repository
-- Environment variable secrets provisioned in the host's secret store
-- HTTPS certificate (auto-provisioned by most modern PaaS platforms)
-
-**Phase 12 (Final Review):** Complete for everything achievable pre-deployment — security hardening (CSP, HSTS, hop-aware trust proxy, request body size limit, query-string-free logging), `npm audit` review, and documentation are done. Live-deployment-only checks (HTTPS smoke test, public rate-limit validation) remain blocked on Phase 11.
+**Completed
 
 To run the app locally, see [Getting Started](#getting-started) above.
