@@ -11,7 +11,8 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
     logger.info('Request completed', {
       requestId,
       method: req.method,
-      path: req.originalUrl,
+      // req.path (not req.originalUrl) — drops the query string so it can never end up in logs.
+      path: req.path,
       status: res.statusCode,
       durationMs: Date.now() - startedAt,
     });
