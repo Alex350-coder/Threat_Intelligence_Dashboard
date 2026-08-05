@@ -16,7 +16,10 @@ import type { HistoryService } from './services/history/history.service.js';
 import type { FavoritesService } from './services/favorites/favorites.service.js';
 
 export interface AppDependencies {
-  config: Pick<AppConfig, 'corsOrigin' | 'rateLimitWindowMs' | 'rateLimitMaxRequests'>;
+  config: Pick<
+    AppConfig,
+    'corsOrigin' | 'rateLimitWindowMs' | 'rateLimitMaxRequests' | 'trustProxy'
+  >;
   orchestrator: SearchOrchestratorService;
   history: HistoryService;
   favorites: FavoritesService;
@@ -29,11 +32,15 @@ export function createApp(deps: AppDependencies): Express {
   const favoritesController = createFavoritesController(deps.favorites);
 
   const app = express();
+  // Required for express-rate-limit / req.secure to see the real client IP and protocol when
+  // deployed behind a host's reverse proxy (see Security.md §4, §8; Deployment.md).
+  app.set('trust proxy', deps.config.trustProxy);
   app.use(securityHeaders);
   app.use(cors({ origin: deps.config.corsOrigin }));
   app.use(requestLogger);
   app.use(createRateLimiter(deps.config));
-  app.use(express.json());
+  // The search body is a single short IOC string; 10kb comfortably covers it with no legitimate use case for more.
+  app.use(express.json({ limit: '10kb' }));
 
   app.get('/health', getHealth);
   app.post('/api/ioc/search', asyncHandler(iocController.search));

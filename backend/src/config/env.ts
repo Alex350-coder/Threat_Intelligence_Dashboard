@@ -6,6 +6,8 @@ export interface AppConfig {
   cacheTtlSeconds: number;
   historyLimit: number;
   dbPath: string;
+  /** Whether the app runs behind a reverse proxy (e.g. a host's load balancer) — controls Express's `trust proxy` so rate limiting keys off the real client IP instead of the proxy's. */
+  trustProxy: boolean;
   virusTotalApiKey: string;
   abuseIpDbApiKey: string;
   ipInfoToken: string;
@@ -62,6 +64,7 @@ export function loadConfig(): AppConfig {
     cacheTtlSeconds: requirePositiveNumberEnv('CACHE_TTL'),
     historyLimit: Number(process.env.HISTORY_LIMIT ?? 100),
     dbPath: process.env.DB_PATH?.trim() || './data/threat-intel.db',
+    trustProxy: process.env.TRUST_PROXY?.trim().toLowerCase() === 'true',
     virusTotalApiKey: process.env.VIRUSTOTAL_API_KEY ?? '',
     abuseIpDbApiKey: process.env.ABUSEIPDB_API_KEY ?? '',
     ipInfoToken: process.env.IPINFO_TOKEN ?? '',
