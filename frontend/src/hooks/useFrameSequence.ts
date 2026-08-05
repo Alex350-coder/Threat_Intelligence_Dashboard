@@ -1,43 +1,78 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-type UseFrameSequenceOptions = {
-  /** e.g. `/media/hero-frames/frame_%06d.jpg` — `%06d` is replaced with a 1-based, zero-padded index. */
-  srcPattern: string;
-  frameCount: number;
-  /** Ref to the scroll container whose scroll progress (0-1) drives the frame index. */
-  containerRef: React.RefObject<HTMLElement>;
-  /** Ref to the canvas the current frame is drawn onto. */
-  canvasRef: React.RefObject<HTMLCanvasElement>;
+type Node = {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  baseX: number;
+  baseY: number;
+  radius: number;
 };
 
-function frameUrl(pattern: string, index: number): string {
-  return pattern.replace('%06d', String(index + 1).padStart(6, '0'));
-}
+type UseFrameSequenceOptions = {
+  /** Ref to the canvas the constellation animation is drawn onto. */
+  canvasRef: React.RefObject<HTMLCanvasElement>;
+};
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+const NODE_SPACING = 64;
+const MAX_CONNECTION_DISTANCE = 130;
+const MOUSE_RADIUS = 160;
+const SPRING_STIFFNESS = 18;
+const DAMPING = 0.82;
+
+function readAccentColor(): string {
+  const value = getComputedStyle(document.documentElement).getPropertyValue('--color-accent');
+  return value.trim() || '#38bdf8';
+}
+
+function hexToRgb(hex: string): string {
+  const normalized = hex.replace('#', '');
+  const r = parseInt(normalized.slice(0, 2), 16);
+  const g = parseInt(normalized.slice(2, 4), 16);
+  const b = parseInt(normalized.slice(4, 6), 16);
+  return `${r}, ${g}, ${b}`;
+}
+
+function buildNodes(width: number, height: number): Node[] {
+  const cols = Math.ceil(width / NODE_SPACING) + 1;
+  const rows = Math.ceil(height / NODE_SPACING) + 1;
+  const nodes: Node[] = [];
+  for (let i = 0; i < cols; i += 1) {
+    for (let j = 0; j < rows; j += 1) {
+      const x = i * NODE_SPACING;
+      const y = j * NODE_SPACING;
+      nodes.push({
+        x,
+        y,
+        vx: 0,
+        vy: 0,
+        baseX: x,
+        baseY: y,
+        radius: Math.random() * 0.8 + 1,
+      });
+    }
+  }
+  return nodes;
+}
+
 /**
- * Drives a scroll-scrubbed image-sequence animation onto a canvas.
- * Frames load progressively in the background (not blocking first paint);
- * drawing always falls back to the nearest already-loaded frame so the
- * effect stays smooth before the full sequence finishes downloading.
- * Fully inert under `prefers-reduced-motion` — only the poster frame loads/draws.
+ * Drives a mouse-reactive constellation/grid canvas animation: a sparse node
+ * grid springs back to its resting position, draws lines between nearby
+ * nodes, and highlights nodes/lines near the cursor in the accent color.
+ * Fully inert under `prefers-reduced-motion` — nodes are drawn once at rest,
+ * with no animation loop and no mouse reactivity.
  */
-export function useFrameSequence({
-  srcPattern,
-  frameCount,
-  containerRef,
-  canvasRef,
-}: UseFrameSequenceOptions): { isReady: boolean } {
-  const framesRef = useRef<Array<HTMLImageElement | null>>([]);
-  const currentDrawnIndexRef = useRef<number>(-1);
+export function useFrameSequence({ canvasRef }: UseFrameSequenceOptions): { isReady: boolean } {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || frameCount <= 0) {
+    if (!canvas) {
       return;
     }
     const ctx = canvas.getContext('2d');
@@ -46,143 +81,139 @@ export function useFrameSequence({
     }
 
     const reducedMotion = prefersReducedMotion();
-    framesRef.current = new Array(frameCount).fill(null);
+    const accentRgb = hexToRgb(readAccentColor());
 
-    const drawFrame = (index: number): void => {
-      const image = framesRef.current[index];
-      if (!image || currentDrawnIndexRef.current === index) {
-        return;
-      }
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-      const scale = Math.max(canvasWidth / image.width, canvasHeight / image.height);
-      const drawWidth = image.width * scale;
-      const drawHeight = image.height * scale;
-      const dx = (canvasWidth - drawWidth) / 2;
-      const dy = (canvasHeight - drawHeight) / 2;
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-      ctx.drawImage(image, dx, dy, drawWidth, drawHeight);
-      currentDrawnIndexRef.current = index;
-    };
+    let width = 0;
+    let height = 0;
+    let nodes: Node[] = [];
+
+    const mouse = { x: -1000, y: -1000 };
 
     const resizeCanvas = (): void => {
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      // Invalidate the draw cache — the canvas was just cleared by the
-      // width/height assignment above and the previous frame's scale/offset
-      // no longer applies to the new backing-store size.
-      currentDrawnIndexRef.current = -1;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      nodes = buildNodes(width, height);
     };
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas, { passive: true });
 
-    const findNearestLoaded = (target: number): number => {
-      if (framesRef.current[target]) {
-        return target;
-      }
-      for (let offset = 1; offset < frameCount; offset += 1) {
-        const lower = target - offset;
-        const upper = target + offset;
-        if (lower >= 0 && framesRef.current[lower]) {
-          return lower;
-        }
-        if (upper < frameCount && framesRef.current[upper]) {
-          return upper;
-        }
-      }
-      return -1;
+    const handleMouseMove = (event: MouseEvent): void => {
+      mouse.x = event.clientX;
+      mouse.y = event.clientY;
+    };
+    const handleMouseLeave = (): void => {
+      mouse.x = -1000;
+      mouse.y = -1000;
     };
 
-    let targetIndex = 0;
-    let rafId = 0;
-
-    const renderLoop = (): void => {
-      const nearest = findNearestLoaded(targetIndex);
-      if (nearest !== -1) {
-        drawFrame(nearest);
+    const drawStaticFrame = (): void => {
+      ctx.clearRect(0, 0, width, height);
+      for (const node of nodes) {
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.fill();
       }
-      // Under reduced motion `targetIndex` never changes, so once the poster
-      // frame has been drawn there's nothing left to redraw — keep ticking
-      // only until that first draw happens, then stop burning CPU/battery.
-      if (!reducedMotion || nearest === -1) {
-        rafId = requestAnimationFrame(renderLoop);
-      }
+      setIsReady(true);
     };
 
-    const handleScroll = (): void => {
-      if (reducedMotion) {
-        return;
-      }
-      const container = containerRef.current;
-      if (!container) {
-        return;
-      }
-      const { top, height } = container.getBoundingClientRect();
-      const scrollable = height - window.innerHeight;
-      const progress = scrollable > 0 ? Math.min(Math.max(-top / scrollable, 0), 1) : 0;
-      targetIndex = Math.min(frameCount - 1, Math.round(progress * (frameCount - 1)));
-    };
-
-    let cancelled = false;
-    let inFlightImage: HTMLImageElement | null = null;
-
-    const loadFrame = (index: number): Promise<void> =>
-      new Promise((resolve) => {
-        const image = new Image();
-        inFlightImage = image;
-        image.decoding = 'async';
-        image.onload = (): void => {
-          // The effect may have cleaned up while this request was in flight
-          // (e.g. fast unmount/route change) — don't write into a ref or
-          // trigger a state update for a hook instance that's gone.
-          if (cancelled) {
-            resolve();
-            return;
-          }
-          framesRef.current[index] = image;
-          if (index === 0) {
-            setIsReady(true);
-          }
-          resolve();
-        };
-        image.onerror = (): void => resolve();
-        image.src = frameUrl(srcPattern, index);
-      });
-
-    const preloadSequentially = async (): Promise<void> => {
-      await loadFrame(0);
-      if (reducedMotion || cancelled) {
-        return;
-      }
-      for (let index = 1; index < frameCount; index += 1) {
-        if (cancelled) {
-          return;
-        }
-        await loadFrame(index);
-      }
-    };
-
-    void preloadSequentially();
-
-    if (!reducedMotion) {
-      window.addEventListener('scroll', handleScroll, { passive: true });
-      handleScroll();
+    if (reducedMotion) {
+      drawStaticFrame();
+      return () => {
+        window.removeEventListener('resize', resizeCanvas);
+      };
     }
-    rafId = requestAnimationFrame(renderLoop);
+
+    let rafId = 0;
+    let lastTime = performance.now();
+
+    const step = (now: number): void => {
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+
+      ctx.clearRect(0, 0, width, height);
+
+      for (const node of nodes) {
+        const dx = mouse.x - node.x;
+        const dy = mouse.y - node.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < MOUSE_RADIUS && dist > 0) {
+          const power = 1 - dist / MOUSE_RADIUS;
+          const force = power * 600;
+          const angle = Math.atan2(dy, dx);
+          node.vx -= Math.cos(angle) * force * dt;
+          node.vy -= Math.sin(angle) * force * dt;
+        }
+
+        node.vx += (node.baseX - node.x) * SPRING_STIFFNESS * dt;
+        node.vy += (node.baseY - node.y) * SPRING_STIFFNESS * dt;
+        node.vx *= DAMPING;
+        node.vy *= DAMPING;
+        node.x += node.vx * dt * 60;
+        node.y += node.vy * dt * 60;
+      }
+
+      for (let i = 0; i < nodes.length; i += 1) {
+        const a = nodes[i];
+        if (!a) {
+          continue;
+        }
+        for (let j = i + 1; j < nodes.length; j += 1) {
+          const b = nodes[j];
+          if (!b) {
+            continue;
+          }
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < MAX_CONNECTION_DISTANCE) {
+            const nearMouse =
+              Math.hypot(mouse.x - a.x, mouse.y - a.y) < MOUSE_RADIUS ||
+              Math.hypot(mouse.x - b.x, mouse.y - b.y) < MOUSE_RADIUS;
+            const alpha = (1 - dist / MAX_CONNECTION_DISTANCE) * (nearMouse ? 0.35 : 0.12);
+            ctx.strokeStyle = nearMouse
+              ? `rgba(${accentRgb}, ${alpha})`
+              : `rgba(255, 255, 255, ${alpha})`;
+            ctx.lineWidth = 0.6;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      for (const node of nodes) {
+        const dist = Math.hypot(mouse.x - node.x, mouse.y - node.y);
+        const isNear = dist < MOUSE_RADIUS;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, isNear ? node.radius * 2 : node.radius, 0, Math.PI * 2);
+        ctx.fillStyle = isNear ? `rgba(${accentRgb}, 0.9)` : 'rgba(255, 255, 255, 0.35)';
+        ctx.fill();
+      }
+
+      setIsReady(true);
+      rafId = requestAnimationFrame(step);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('mouseleave', handleMouseLeave);
+    rafId = requestAnimationFrame(step);
 
     return () => {
-      cancelled = true;
-      if (inFlightImage) {
-        inFlightImage.onload = null;
-        inFlightImage.onerror = null;
-        inFlightImage.src = '';
-      }
       window.removeEventListener('resize', resizeCanvas);
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseleave', handleMouseLeave);
       cancelAnimationFrame(rafId);
     };
-  }, [srcPattern, frameCount, containerRef, canvasRef]);
+  }, [canvasRef]);
 
   return { isReady };
 }

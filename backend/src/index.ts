@@ -1,4 +1,6 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { logger } from './config/logger.js';
 import { loadConfig } from './config/env.js';
 import { createProviderRegistry } from './providers/index.js';
@@ -11,6 +13,13 @@ import { HistoryService } from './services/history/history.service.js';
 import { SqliteFavoritesRepository } from './services/favorites/favorites.repository.js';
 import { FavoritesService } from './services/favorites/favorites.service.js';
 import { createApp } from './app.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({
+  path: path.resolve(__dirname, '../../.env'),
+});
 
 function bootstrap(): void {
   const config = loadConfig();
