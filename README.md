@@ -6,10 +6,6 @@ Aggregates IOC (IP, domain, URL, hash) lookups across multiple public threat-int
 
 This is a **portfolio project**, built to demonstrate full-stack engineering practices (clean architecture, strict TypeScript, provider abstraction, security hardening, testing) rather than to serve as a production security tool. It is not affiliated with, endorsed by, or a replacement for any commercial threat-intelligence platform. See [Known Limitations](#known-limitations) below for what's intentionally out of scope or not yet built.
 
-## Documentation
-
-Project specifications, architecture, and development guidelines live in [`.claude/`](../.claude), starting with [`Plan.md`](../.claude/Plan.md) and [`Architecture.md`](../.claude/Architecture.md).
-
 ## Workspaces
 
 - `frontend/` — React + TypeScript SPA, Vite, Tailwind CSS
@@ -98,21 +94,18 @@ This is a security tool, so security is built-in by default. Key practices:
 - **Rate limiting** — Public API rate-limited to prevent abuse of upstream provider quotas; excess requests return `429 Too Many Requests`
 - **Error safety** — Errors never leak stack traces, internal paths, or provider keys; failures degrade gracefully to "unavailable" status
 - **Response caching** — Repeated lookups served from local SQLite cache, reducing calls to external providers
-- **Security headers** — HTTPS, CORS restricted to known origin, Content-Security-Policy, X-Frame-Options, etc. (see [Security.md](../.claude/Security.md) for full details)
-
-For a deeper dive, see [Security.md](../.claude/Security.md) in the documentation.
+- **Security headers** — HTTPS, CORS restricted to known origin, Content-Security-Policy, X-Frame-Options, etc.
 
 ## Known Limitations
 
 Since this is a portfolio project, not a commercial product, several things are intentionally scoped out or left unbuilt:
 
 - **Not deployed publicly.** The app runs locally only (see [Getting Started](#getting-started)); there's no live/hosted demo (Phase 11 — Deployment — is pending, see [Status](#status)).
-- **Only 2 of 4 documented providers are implemented.** `IPINFO_TOKEN` and `URLSCAN_API_KEY` are accepted as env vars and documented in [`ApiProviders.md`](../.claude/ApiProviders.md), but IPInfo and URLScan are not yet wired into the provider registry — only AbuseIPDB and VirusTotal are live. Adding a provider only requires implementing the `ThreatProvider` interface, no changes to the frontend or aggregation logic.
+- **Only 2 of 4 documented providers are implemented.** `IPINFO_TOKEN` and `URLSCAN_API_KEY` are accepted as env vars, but IPInfo and URLScan are not yet wired into the provider registry — only AbuseIPDB and VirusTotal are live. Adding a provider only requires implementing the `ThreatProvider` interface, no changes to the frontend or aggregation logic.
 - **No authentication or accounts.** The app is single-user by design for the MVP; there's no login, multi-tenancy, or per-user API keys.
 - **No AI-generated summaries or scoring.** Verdicts and scores come directly from provider data, not from any LLM-based analysis.
 - **No case management, alerting, or PDF export.** These are common in commercial threat-intel platforms but deliberately out of scope here.
 - **No IOC relationship graph / correlation view.** Results are shown per-indicator, not as a linked graph.
-- Full list of deliberately deferred features: [`FutureIdeas.md`](../.claude/FutureIdeas.md) and the non-goals in [`Claude.md`](../.claude/Claude.md) §3.
 
 ## Status
 
@@ -132,4 +125,4 @@ Since this is a portfolio project, not a commercial product, several things are 
 
 **Phase 12 (Final Review):** Complete for everything achievable pre-deployment — security hardening (CSP, HSTS, hop-aware trust proxy, request body size limit, query-string-free logging), `npm audit` review, and documentation are done. Live-deployment-only checks (HTTPS smoke test, public rate-limit validation) remain blocked on Phase 11.
 
-To run the app locally, see [Getting Started](#getting-started) above. The full phase sequence is documented in [Plan.md](../.claude/Plan.md).
+To run the app locally, see [Getting Started](#getting-started) above.
