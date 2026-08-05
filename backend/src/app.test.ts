@@ -70,7 +70,7 @@ function buildApp(
     corsOrigin: 'http://localhost:5173',
     rateLimitWindowMs: 60_000,
     rateLimitMaxRequests: 1000,
-    trustProxy: false,
+    trustProxyHops: 0,
     ...overrides,
   };
 

@@ -18,7 +18,7 @@ import type { FavoritesService } from './services/favorites/favorites.service.js
 export interface AppDependencies {
   config: Pick<
     AppConfig,
-    'corsOrigin' | 'rateLimitWindowMs' | 'rateLimitMaxRequests' | 'trustProxy'
+    'corsOrigin' | 'rateLimitWindowMs' | 'rateLimitMaxRequests' | 'trustProxyHops'
   >;
   orchestrator: SearchOrchestratorService;
   history: HistoryService;
@@ -32,9 +32,10 @@ export function createApp(deps: AppDependencies): Express {
   const favoritesController = createFavoritesController(deps.favorites);
 
   const app = express();
-  // Required for express-rate-limit / req.secure to see the real client IP and protocol when
-  // deployed behind a host's reverse proxy (see Security.md §4, §8; Deployment.md).
-  app.set('trust proxy', deps.config.trustProxy);
+  // A numeric hop count (not `true`) — trusts exactly that many proxy hops' worth of
+  // X-Forwarded-* headers, so a client can't spoof extra hops to fake its own IP and bypass
+  // rate limiting. 0 (default) trusts nothing, i.e. no reverse proxy in front of the app.
+  app.set('trust proxy', deps.config.trustProxyHops);
   app.use(securityHeaders);
   app.use(cors({ origin: deps.config.corsOrigin }));
   app.use(requestLogger);

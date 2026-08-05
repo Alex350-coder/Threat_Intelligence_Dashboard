@@ -6,8 +6,8 @@ export interface AppConfig {
   cacheTtlSeconds: number;
   historyLimit: number;
   dbPath: string;
-  /** Whether the app runs behind a reverse proxy (e.g. a host's load balancer) — controls Express's `trust proxy` so rate limiting keys off the real client IP instead of the proxy's. */
-  trustProxy: boolean;
+  /** Number of reverse-proxy hops in front of the app (e.g. 1 for a single PaaS load balancer). Passed straight to Express's `trust proxy` so only that many `X-Forwarded-*` hops are trusted — an explicit count, not a boolean, so a spoofed header can't be used to bypass rate limiting. 0 (default) means "no proxy, trust nothing." */
+  trustProxyHops: number;
   virusTotalApiKey: string;
   abuseIpDbApiKey: string;
   ipInfoToken: string;
@@ -50,6 +50,18 @@ function optionalPositiveIntegerEnv(name: string, fallback: number): number {
   return parsed;
 }
 
+function optionalNonNegativeIntegerEnv(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === '') {
+    return fallback;
+  }
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new Error(`Environment variable ${name} must be a non-negative integer, got: ${raw}`);
+  }
+  return parsed;
+}
+
 export function loadConfig(): AppConfig {
   const missing = REQUIRED_VARS.filter((name) => !process.env[name]?.trim());
   if (missing.length > 0) {
@@ -64,7 +76,7 @@ export function loadConfig(): AppConfig {
     cacheTtlSeconds: requirePositiveNumberEnv('CACHE_TTL'),
     historyLimit: Number(process.env.HISTORY_LIMIT ?? 100),
     dbPath: process.env.DB_PATH?.trim() || './data/threat-intel.db',
-    trustProxy: process.env.TRUST_PROXY?.trim().toLowerCase() === 'true',
+    trustProxyHops: optionalNonNegativeIntegerEnv('TRUST_PROXY_HOPS', 0),
     virusTotalApiKey: process.env.VIRUSTOTAL_API_KEY ?? '',
     abuseIpDbApiKey: process.env.ABUSEIPDB_API_KEY ?? '',
     ipInfoToken: process.env.IPINFO_TOKEN ?? '',
