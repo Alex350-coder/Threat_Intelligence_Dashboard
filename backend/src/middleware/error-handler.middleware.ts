@@ -16,7 +16,9 @@ export function errorHandler(
   const message = isAppError ? err.message : 'Internal server error';
 
   logger.error('Request failed', {
-    path: req.originalUrl,
+    // req.path (not req.originalUrl) — keeps the query string out of error logs too, matching
+    // request-logger.middleware.ts.
+    path: req.path,
     method: req.method,
     statusCode,
     code,
