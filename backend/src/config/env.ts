@@ -74,7 +74,7 @@ export function loadConfig(): AppConfig {
     rateLimitWindowMs: requirePositiveNumberEnv('RATE_LIMIT_WINDOW_MS'),
     rateLimitMaxRequests: requirePositiveNumberEnv('RATE_LIMIT_MAX_REQUESTS'),
     cacheTtlSeconds: requirePositiveNumberEnv('CACHE_TTL'),
-    historyLimit: Number(process.env.HISTORY_LIMIT ?? 100),
+    historyLimit: optionalPositiveIntegerEnv('HISTORY_LIMIT', 100),
     dbPath: process.env.DB_PATH?.trim() || './data/threat-intel.db',
     trustProxyHops: optionalNonNegativeIntegerEnv('TRUST_PROXY_HOPS', 0),
     virusTotalApiKey: process.env.VIRUSTOTAL_API_KEY ?? '',
