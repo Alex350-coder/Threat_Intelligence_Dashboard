@@ -2,6 +2,10 @@
 
 Aggregates IOC (IP, domain, URL, hash) lookups across multiple public threat-intel providers into one normalized view. Paste an indicator, get instant verdicts from AbuseIPDB and VirusTotal without leaving your dashboard.
 
+## About This Project
+
+This is a **portfolio project**, built to demonstrate full-stack engineering practices (clean architecture, strict TypeScript, provider abstraction, security hardening, testing) rather than to serve as a production security tool. It is not affiliated with, endorsed by, or a replacement for any commercial threat-intelligence platform. See [Known Limitations](#known-limitations) below for what's intentionally out of scope or not yet built.
+
 ## Documentation
 
 Project specifications, architecture, and development guidelines live in [`.claude/`](../.claude), starting with [`Plan.md`](../.claude/Plan.md) and [`Architecture.md`](../.claude/Architecture.md).
@@ -97,6 +101,18 @@ This is a security tool, so security is built-in by default. Key practices:
 - **Security headers** — HTTPS, CORS restricted to known origin, Content-Security-Policy, X-Frame-Options, etc. (see [Security.md](../.claude/Security.md) for full details)
 
 For a deeper dive, see [Security.md](../.claude/Security.md) in the documentation.
+
+## Known Limitations
+
+Since this is a portfolio project, not a commercial product, several things are intentionally scoped out or left unbuilt:
+
+- **Not deployed publicly.** The app runs locally only (see [Getting Started](#getting-started)); there's no live/hosted demo (Phase 11 — Deployment — is pending, see [Status](#status)).
+- **Only 2 of 4 documented providers are implemented.** `IPINFO_TOKEN` and `URLSCAN_API_KEY` are accepted as env vars and documented in [`ApiProviders.md`](../.claude/ApiProviders.md), but IPInfo and URLScan are not yet wired into the provider registry — only AbuseIPDB and VirusTotal are live. Adding a provider only requires implementing the `ThreatProvider` interface, no changes to the frontend or aggregation logic.
+- **No authentication or accounts.** The app is single-user by design for the MVP; there's no login, multi-tenancy, or per-user API keys.
+- **No AI-generated summaries or scoring.** Verdicts and scores come directly from provider data, not from any LLM-based analysis.
+- **No case management, alerting, or PDF export.** These are common in commercial threat-intel platforms but deliberately out of scope here.
+- **No IOC relationship graph / correlation view.** Results are shown per-indicator, not as a linked graph.
+- Full list of deliberately deferred features: [`FutureIdeas.md`](../.claude/FutureIdeas.md) and the non-goals in [`Claude.md`](../.claude/Claude.md) §3.
 
 ## Status
 
