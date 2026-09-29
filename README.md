@@ -2,6 +2,18 @@
 
 Aggregates IOC (IP, domain, URL, hash) lookups across multiple public threat-intel providers into one normalized view. Paste an indicator, get instant verdicts from AbuseIPDB and VirusTotal without leaving your dashboard.
 
+![Threat Intelligence Dashboard — hero](./screenshots/01-home-hero.jpg)
+
+## Screenshots
+
+| | |
+|---|---|
+| **Dashboard — ready for a search** ![Dashboard empty state](./screenshots/02-dashboard-empty.jpg) | **Search failure — graceful degradation** ![Search error state](./screenshots/03-search-error-state.jpg) |
+| **History — past lookups with verdict, score, and date** ![History table](./screenshots/04-history.jpg) | **Favorites — empty state** ![Favorites empty state](./screenshots/05-favorites-empty.jpg) |
+| **Light theme** ![Dashboard in light mode](./screenshots/06-dashboard-light-mode.jpg) | |
+
+> The error-state screenshot above is a genuine product behavior, not a placeholder: without real `VIRUSTOTAL_API_KEY` / `ABUSEIPDB_API_KEY` values the backend correctly reports providers as unavailable instead of crashing or leaking a stack trace — see [Security](#security).
+
 ## About This Project
 
 This is a **portfolio project**, built to demonstrate full-stack engineering practices (clean architecture, strict TypeScript, provider abstraction, security hardening, testing) rather than to serve as a production security tool. It is not affiliated with, endorsed by, or a replacement for any commercial threat-intelligence platform. See [Known Limitations](#known-limitations) below for what's intentionally out of scope or not yet built.
@@ -106,6 +118,7 @@ Since this is a portfolio project, not a commercial product, several things are 
 - **No AI-generated summaries or scoring.** Verdicts and scores come directly from provider data, not from any LLM-based analysis.
 - **No case management, alerting, or PDF export.** These are common in commercial threat-intel platforms but deliberately out of scope here.
 - **No IOC relationship graph / correlation view.** Results are shown per-indicator, not as a linked graph.
+- **Known bug: light-mode hero contrast.** On the home page, the hero title/subtitle stay white-on-white when the theme is switched to Light, making them unreadable (other pages, e.g. the Dashboard, render correctly in Light — see the [screenshots](#screenshots) above). Not yet fixed.
 
 ## Status
 
